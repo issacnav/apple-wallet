@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 225" width="360" height="225">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede5f7"/>
+      <stop offset="0.45" stop-color="#d2c0e8"/>
+      <stop offset="1" stop-color="#a890c8"/>
+    </linearGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5c4080"/>
+      <stop offset="1" stop-color="#2a1838"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="225" rx="14" fill="url(#sky)"/>
+  <path fill="#8b74a8" d="M0 118 L40 78 L72 98 L118 62 L168 92 L218 58 L262 88 L308 68 L360 98 V225 H0 Z"/>
+  <path fill="#6a5288" d="M0 138 L55 108 L92 128 L142 98 L188 124 L232 108 L278 132 L328 112 L360 138 V225 H0 Z"/>
+  <path fill="#4a3568" d="M0 158 L72 128 L108 148 L158 118 L202 142 L252 128 L298 152 L360 132 V225 H0 Z"/>
+  <path fill="url(#rock)" d="M0 225 V178 L32 162 L58 172 L88 152 L118 168 L152 148 L188 168 L222 158 L252 178 L288 162 L322 182 L360 168 V225 Z"/>
+  <g fill="#140a1a">
+    <ellipse cx="228" cy="138" rx="38" ry="22"/>
+    <circle cx="248" cy="118" r="16"/>
+    <path d="M232 104 Q218 72 205 58 Q222 70 236 96"/>
+    <path d="M258 102 Q278 70 302 62 Q286 82 268 108"/>
+    <rect x="210" y="150" width="8" height="28" rx="2"/>
+    <rect x="232" y="152" width="8" height="26" rx="2"/>
+    <rect x="248" y="148" width="8" height="28" rx="2"/>
+  </g>
+  <g transform="translate(272 156)" fill="none" stroke="#2d1a40" stroke-width="2">
+    <circle r="30" stroke-opacity="0.95"/>
+    <circle r="24" stroke-width="1" stroke-opacity="0.6"/>
+  </g>
+  <g fill="#2d1a40" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">
+    <text x="272" y="144" font-size="8">THE GREAT SEAL</text>
+    <text x="272" y="156" font-size="8">OF THE STATE</text>
+    <text x="272" y="172" font-size="7" font-weight="600">1776 - 1976 - 2021</text>
+  </g>
+  <rect x="266" y="176" width="12" height="10" fill="#2d1a40" rx="1"/>
+</svg>

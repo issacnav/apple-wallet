@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Card stack motion uses transform only (Framer Motion applies inline styles).
+ * Optional reduced-motion: transitions shorten via JS; this documents intent.
+ */
+@layer components {
+  .card-stack-shell {
+    transform-origin: center center;
+    will-change: transform;
+  }
+}
