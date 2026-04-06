@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Interface Craft",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:\\apple wallet\\server.js"],
+      "port": 3030
+    },
+    {
+      "name": "card-stack-hero",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/C", "C:\\apple wallet\\card-stack-hero\\start-dev.bat"],
+      "port": 5173,
+      "autoPort": true,
+      "disabled": true
+    }
+  ]
+}
