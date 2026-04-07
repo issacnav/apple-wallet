@@ -135,7 +135,7 @@ html, body {
   height: 214px;
   border-radius: 24px;
   cursor: pointer;
-  transform: translate3d(-50%, var(--y, 0px), 0);
+  transform: translate3d(calc(-50% + var(--bx, 0px)), calc(var(--y, 0px) + var(--by, 0px)), 0) rotate(var(--br, 0deg)) scale(var(--bs, 1));
   backface-visibility: hidden;
   color: #fff;
   overflow: hidden;
@@ -169,6 +169,14 @@ html, body {
 .wallet-card:active {
   outline: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+}
+.wallet-card--blast-tween {
+  transition: transform 0.82s cubic-bezier(0.25, 0.88, 0.28, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wallet-card--blast-tween {
+    transition-duration: 0.01ms;
+  }
 }
 .wallet-card--selected {
   box-shadow:
@@ -398,7 +406,10 @@ html, body {
   height: 132px;
   z-index: 100;
   overflow: hidden;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+  touch-action: manipulation;
   background: linear-gradient(180deg, #222224 0%, #18181a 38%, #101012 100%);
   box-shadow:
     inset 0 12px 32px rgba(0, 0, 0, 0.38),
@@ -466,7 +477,7 @@ html, body {
               stroke-dasharray="6 4" stroke-linecap="round" />
       </svg>
     </div>
-    <div class="wallet-front" id="wallet-front">
+    <div class="wallet-front" id="wallet-front" title="Tap wallet 3× to fan cards — tap anywhere to return">
       <!-- Stitching: full perimeter of wallet-front, detours around pill cutout at top -->
       <svg class="stitch-svg" viewBox="0 0 380 132" fill="none">
         <path d="
@@ -576,6 +587,8 @@ const walletStackEl = document.getElementById('wallet-stack');
 const walletFrontEl = document.getElementById('wallet-front');
 const cardEls = [];
 let selectedIndex = null;
+let walletBlown = false;
+let blastClosing = false;
 
 const PAN_LINE = '•••• 6784';
 
@@ -619,6 +632,14 @@ let cardSpringRaf = null;
 let cardSpringPrevT = 0;
 
 function cardSpringTick(t) {
+  if (walletBlown) {
+    if (cardSpringRaf) {
+      cancelAnimationFrame(cardSpringRaf);
+      cardSpringRaf = null;
+      cardSpringPrevT = 0;
+    }
+    return;
+  }
   if (cardSpringPrevT === 0) cardSpringPrevT = t;
   let dt = (t - cardSpringPrevT) / 1000;
   cardSpringPrevT = t;
@@ -669,7 +690,116 @@ const SELECTED_CARD_TOP_FULL = -(CARD_H + 60);               // -274: fully lift
 
 let revealFull = false;
 
+/** Ordered fan from stack: index 0 = leftmost ray, last = rightmost (deterministic, not random). */
+function blastOutForIndex(i, n) {
+  if (n <= 1) {
+    return { uX: 0, uY: -1, deg: 0, bs: 1.05 };
+  }
+  const halfSpreadDeg = 48;
+  const t = (i / (n - 1)) * 2 - 1;
+  const angleFromUpDeg = t * halfSpreadDeg;
+  const rad = (angleFromUpDeg * Math.PI) / 180;
+  const uX = Math.sin(rad);
+  const uY = -Math.cos(rad);
+  const deg = angleFromUpDeg * 0.5;
+  const bs = 1.03 + (i / Math.max(1, n - 1)) * 0.05;
+  return { uX, uY, deg, bs };
+}
+
+function blastScale() {
+  return Math.min(window.innerWidth, window.innerHeight, 520) * 0.4;
+}
+
+function setCardBlast(el, i, on) {
+  const n = cardEls.length;
+  const d = blastOutForIndex(i, n);
+  const s = blastScale();
+  if (on) {
+    el.style.setProperty('--bx', `${d.uX * s}px`);
+    el.style.setProperty('--by', `${d.uY * s}px`);
+    el.style.setProperty('--br', `${d.deg}deg`);
+    el.style.setProperty('--bs', String(d.bs));
+  } else {
+    el.style.setProperty('--bx', '0px');
+    el.style.setProperty('--by', '0px');
+    el.style.setProperty('--br', '0deg');
+    el.style.setProperty('--bs', '1');
+  }
+}
+
+function openWalletBlast() {
+  if (walletBlown) return;
+
+  if (reduceMotion) {
+    walletBlown = true;
+    if (cardSpringRaf) {
+      cancelAnimationFrame(cardSpringRaf);
+      cardSpringRaf = null;
+      cardSpringPrevT = 0;
+    }
+    cardEls.forEach((el, i) => {
+      setCardBlast(el, i, true);
+      el.style.zIndex = String(i + 1);
+    });
+    layout();
+    return;
+  }
+
+  walletBlown = true;
+  if (cardSpringRaf) {
+    cancelAnimationFrame(cardSpringRaf);
+    cardSpringRaf = null;
+    cardSpringPrevT = 0;
+  }
+  cardEls.forEach((el, i) => {
+    el.classList.add('wallet-card--blast-tween');
+    el.style.zIndex = String(i + 1);
+    setCardBlast(el, i, false);
+  });
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      cardEls.forEach((el, i) => {
+        setCardBlast(el, i, true);
+      });
+    });
+  });
+}
+
+function closeWalletBlast() {
+  if (!walletBlown || blastClosing) return;
+  selectedIndex = null;
+
+  if (reduceMotion) {
+    walletBlown = false;
+    blastClosing = false;
+    cardEls.forEach((el, i) => {
+      setCardBlast(el, i, false);
+    });
+    layout();
+    return;
+  }
+
+  blastClosing = true;
+  cardEls.forEach((el, i) => {
+    setCardBlast(el, i, false);
+  });
+  setTimeout(() => {
+    walletBlown = false;
+    blastClosing = false;
+    cardEls.forEach((el) => el.classList.remove('wallet-card--blast-tween'));
+    layout();
+  }, 840);
+}
+
 function layout() {
+  if (walletBlown) {
+    cardEls.forEach((el, i) => {
+      el.classList.toggle('wallet-card--selected', selectedIndex === i);
+      el.style.zIndex = String(i + 1);
+    });
+    return;
+  }
+
   cardEls.forEach((el, i) => {
     const idleY = BASE_Y - (CARDS.length - 1 - i) * PEEK;
     el.style.zIndex = String(i + 1);
@@ -693,6 +823,35 @@ function layout() {
   if (!reduceMotion) startCardSpringLoop();
 }
 
+let walletFrontTapCount = 0;
+let walletFrontTapTimer = null;
+walletFrontEl.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (walletBlown) return;
+  walletFrontTapCount += 1;
+  clearTimeout(walletFrontTapTimer);
+  if (walletFrontTapCount >= 3) {
+    walletFrontTapCount = 0;
+    openWalletBlast();
+    return;
+  }
+  walletFrontTapTimer = setTimeout(() => {
+    walletFrontTapCount = 0;
+  }, 520);
+});
+
+/* Tap anywhere while fanned: reverse along the same transform (CSS transition is symmetric). */
+document.addEventListener(
+  'click',
+  (e) => {
+    if (!walletBlown) return;
+    e.preventDefault();
+    e.stopPropagation();
+    closeWalletBlast();
+  },
+  true
+);
+
 const toggleBtn = document.getElementById('reveal-toggle');
 toggleBtn.addEventListener('click', e => {
   e.stopPropagation();
@@ -703,9 +862,14 @@ toggleBtn.addEventListener('click', e => {
 });
 
 document.addEventListener('click', () => {
+  if (walletBlown) return;
   if (selectedIndex !== null) { selectedIndex = null; layout(); }
 });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && walletBlown) {
+    closeWalletBlast();
+    return;
+  }
   if (e.key === 'Escape' && selectedIndex !== null) { selectedIndex = null; layout(); }
 });
 
